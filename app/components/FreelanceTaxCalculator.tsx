@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import {
   calculateFreelanceTax,
   STATE_OPTIONS,
@@ -8,6 +9,7 @@ import {
   type TaxBreakdown,
   type USStateCode,
 } from "@/lib/tax-calculator";
+import TaxDeductionsChecklist from "./TaxDeductionsChecklist";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -22,13 +24,14 @@ const moneyDetailed = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
+const PIE_COLORS = ["#059669", "#d97706", "#7c3aed"];
+
 function parseMoney(raw: string): number {
   const n = Number.parseFloat(raw.replace(/,/g, ""));
   return Number.isFinite(n) ? Math.max(0, n) : 0;
 }
 
 export type FreelanceTaxCalculatorProps = {
-  /** Two-letter state code; controls the default selection in the dropdown. */
   initialState?: USStateCode;
   heading?: string;
   subheading?: string;
@@ -89,6 +92,16 @@ export default function FreelanceTaxCalculator({
   const monthlySE = result.selfEmploymentTax / 12;
   const monthlyFed = result.federalIncomeTax / 12;
   const monthlyState = result.stateIncomeTax / 12;
+
+  const pieData = useMemo(
+    () =>
+      [
+        { name: "Take-home pay", value: result.netTakeHome },
+        { name: "Federal tax", value: result.federalIncomeTax },
+        { name: "Self-employment tax", value: result.selfEmploymentTax },
+      ].filter((d) => d.value > 0),
+    [result.netTakeHome, result.federalIncomeTax, result.selfEmploymentTax],
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/80 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/40 dark:text-slate-100">
@@ -286,6 +299,49 @@ export default function FreelanceTaxCalculator({
                   </div>
                 </dl>
 
+                <div className="mt-8 rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Cash flow split</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                    Take-home pay, federal income tax, and self-employment tax (annual). State tax is not included in
+                    this chart.
+                  </p>
+                  {pieData.length > 0 ? (
+                    <div className="mt-4 h-[280px] w-full min-w-[240px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={56}
+                            outerRadius={96}
+                            paddingAngle={2}
+                          >
+                            {pieData.map((_, index) => (
+                              <Cell key={pieData[index].name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value) => [moneyDetailed.format(Number(value)), "Amount"]}
+                            contentStyle={{
+                              borderRadius: "0.75rem",
+                              border: "1px solid rgb(226 232 240)",
+                              backgroundColor: "rgba(255,255,255,0.96)",
+                            }}
+                          />
+                          <Legend verticalAlign="bottom" height={40} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
+                      Add income and click Calculate to see the chart.
+                    </p>
+                  )}
+                </div>
+
                 <div className="mt-8">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Tax breakdown</h3>
                   <ul className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
@@ -408,6 +464,8 @@ export default function FreelanceTaxCalculator({
             </div>
           </section>
         </div>
+
+        <TaxDeductionsChecklist />
       </div>
     </div>
   );

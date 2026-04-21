@@ -18,9 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    /** Fallback when a route does not set its own `title` (e.g. some error states). */
     default: "Freelance Tax Calculator | TaxSnap 2026",
-    /** Child routes use a short segment, e.g. `Privacy Policy` → `Privacy Policy | TaxSnap 2026`. */
     template: "%s | TaxSnap 2026",
   },
   description:

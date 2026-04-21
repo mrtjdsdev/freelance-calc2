@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import FreelanceTaxCalculator from "./components/FreelanceTaxCalculator";
 import { STATE_OPTIONS, stateSlugFromCode } from "@/lib/tax-calculator";
 
-/** Homepage: primary keyword first in the title segment (see root `title.template` in layout). */
 export const metadata: Metadata = {
   title: "Freelance Tax Calculator",
   description:
