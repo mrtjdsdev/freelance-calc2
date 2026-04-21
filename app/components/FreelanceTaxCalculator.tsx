@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import {
   calculateFreelanceTax,
@@ -26,16 +26,6 @@ const moneyDetailed = new Intl.NumberFormat("en-US", {
 
 const PIE_COLORS = ["#059669", "#d97706", "#7c3aed"];
 
-/** Recharts touches `window`/DOM; render chart only after client mount so SSR/Vercel builds never execute it. */
-function NoSSR({ fallback, children }: { fallback: ReactNode; children: ReactNode }) {
-  const [client, setClient] = useState(false);
-  useEffect(() => {
-    setClient(true);
-  }, []);
-  if (!client) return fallback;
-  return children;
-}
-
 function parseMoney(raw: string): number {
   const n = Number.parseFloat(raw.replace(/,/g, ""));
   return Number.isFinite(n) ? Math.max(0, n) : 0;
@@ -59,7 +49,12 @@ export default function FreelanceTaxCalculator({
   const [leadEmail, setLeadEmail] = useState("");
   const [leadSubmitted, setLeadSubmitted] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const calculateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -316,44 +311,40 @@ export default function FreelanceTaxCalculator({
                     this chart.
                   </p>
                   {pieData.length > 0 ? (
-                    <div className="mt-4 h-[350px] w-full">
-                      <NoSSR
-                        fallback={
-                          <div
-                            className="h-[350px] w-full rounded-lg bg-slate-200 dark:bg-slate-700"
-                            aria-hidden
-                          />
-                        }
-                      >
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={pieData}
-                              dataKey="value"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={56}
-                              outerRadius={96}
-                              paddingAngle={2}
-                            >
-                              {pieData.map((_, index) => (
-                                <Cell key={pieData[index].name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip
-                              formatter={(value) => [moneyDetailed.format(Number(value)), "Amount"]}
-                              contentStyle={{
-                                borderRadius: "0.75rem",
-                                border: "1px solid rgb(226 232 240)",
-                                backgroundColor: "rgba(255,255,255,0.96)",
-                              }}
-                            />
-                            <Legend verticalAlign="bottom" height={40} />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </NoSSR>
-                    </div>
+                    <>
+                      {!mounted ? <div className="mt-4 h-[300px] w-full" aria-hidden /> : null}
+                      {mounted && (
+                        <div className="mt-4 h-[300px] w-full">
+                          <ResponsiveContainer width="100%" height="100%" debounce={100}>
+                            <PieChart>
+                              <Pie
+                                data={pieData}
+                                dataKey="value"
+                                nameKey="name"
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={56}
+                                outerRadius={96}
+                                paddingAngle={2}
+                              >
+                                {pieData.map((_, index) => (
+                                  <Cell key={pieData[index].name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                formatter={(value) => [moneyDetailed.format(Number(value)), "Amount"]}
+                                contentStyle={{
+                                  borderRadius: "0.75rem",
+                                  border: "1px solid rgb(226 232 240)",
+                                  backgroundColor: "rgba(255,255,255,0.96)",
+                                }}
+                              />
+                              <Legend verticalAlign="bottom" height={40} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
                       Add income and click Calculate to see the chart.
