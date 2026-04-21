@@ -7,10 +7,17 @@ type PageProps = {
   params: Promise<{ state: string }>;
 };
 
+/** One static page per US state (50 total). */
 export function generateStaticParams(): { state: string }[] {
-  return US_STATE_CODES.map((code) => ({
+  const params = US_STATE_CODES.map((code) => ({
     state: stateSlugFromCode(code),
   }));
+  if (params.length !== 50) {
+    throw new Error(
+      `generateStaticParams: expected 50 state routes, got ${params.length}. Check US_STATE_CODES in lib/tax-calculator.ts.`,
+    );
+  }
+  return params;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

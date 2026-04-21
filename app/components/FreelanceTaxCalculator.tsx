@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
@@ -49,7 +49,13 @@ export default function FreelanceTaxCalculator({
   const [leadEmail, setLeadEmail] = useState("");
   const [leadSubmitted, setLeadSubmitted] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  /** Recharts ResponsiveContainer measures the DOM; render only after mount so height is non-zero on production. */
+  const [mounted, setMounted] = useState(false);
   const calculateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -306,34 +312,43 @@ export default function FreelanceTaxCalculator({
                     this chart.
                   </p>
                   {pieData.length > 0 ? (
-                    <div className="mt-4 h-[280px] w-full min-w-[240px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={56}
-                            outerRadius={96}
-                            paddingAngle={2}
-                          >
-                            {pieData.map((_, index) => (
-                              <Cell key={pieData[index].name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(value) => [moneyDetailed.format(Number(value)), "Amount"]}
-                            contentStyle={{
-                              borderRadius: "0.75rem",
-                              border: "1px solid rgb(226 232 240)",
-                              backgroundColor: "rgba(255,255,255,0.96)",
-                            }}
-                          />
-                          <Legend verticalAlign="bottom" height={40} />
-                        </PieChart>
-                      </ResponsiveContainer>
+                    <div className="mt-4 h-[350px] w-full">
+                      {mounted ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={pieData}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={56}
+                              outerRadius={96}
+                              paddingAngle={2}
+                            >
+                              {pieData.map((_, index) => (
+                                <Cell key={pieData[index].name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(value) => [moneyDetailed.format(Number(value)), "Amount"]}
+                              contentStyle={{
+                                borderRadius: "0.75rem",
+                                border: "1px solid rgb(226 232 240)",
+                                backgroundColor: "rgba(255,255,255,0.96)",
+                              }}
+                            />
+                            <Legend verticalAlign="bottom" height={40} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div
+                          className="flex h-[350px] w-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white/50 text-sm text-slate-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-slate-400"
+                          aria-hidden
+                        >
+                          Loading chart…
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
