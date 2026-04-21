@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { useEffect, useRef, useState } from "react";
 import {
   calculateFreelanceTax,
   STATE_OPTIONS,
@@ -23,8 +22,6 @@ const moneyDetailed = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
-
-const PIE_COLORS = ["#059669", "#d97706", "#7c3aed"];
 
 function parseMoney(raw: string): number {
   const n = Number.parseFloat(raw.replace(/,/g, ""));
@@ -49,12 +46,7 @@ export default function FreelanceTaxCalculator({
   const [leadEmail, setLeadEmail] = useState("");
   const [leadSubmitted, setLeadSubmitted] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const calculateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -98,15 +90,9 @@ export default function FreelanceTaxCalculator({
   const monthlyFed = result.federalIncomeTax / 12;
   const monthlyState = result.stateIncomeTax / 12;
 
-  const pieData = useMemo(
-    () =>
-      [
-        { name: "Take-home pay", value: result.netTakeHome },
-        { name: "Federal tax", value: result.federalIncomeTax },
-        { name: "Self-employment tax", value: result.selfEmploymentTax },
-      ].filter((d) => d.value > 0),
-    [result.netTakeHome, result.federalIncomeTax, result.selfEmploymentTax],
-  );
+  const netProfit = result.netProfit;
+  const takeHomePct = netProfit > 0 ? Math.round((result.netTakeHome / netProfit) * 1000) / 10 : 0;
+  const taxPct = netProfit > 0 ? Math.round((result.totalTax / netProfit) * 1000) / 10 : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/80 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/40 dark:text-slate-100">
@@ -305,55 +291,67 @@ export default function FreelanceTaxCalculator({
                 </dl>
 
                 <div className="mt-8 rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Cash flow split</h3>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Tax breakdown</h3>
                   <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
-                    Take-home pay, federal income tax, and self-employment tax (annual). State tax is not included in
-                    this chart.
+                    Estimated split of net profit after business expenses—take-home pay versus all estimated taxes
+                    (annual).
                   </p>
-                  {pieData.length > 0 ? (
-                    <>
-                      {!mounted ? <div className="mt-4 h-[300px] w-full" aria-hidden /> : null}
-                      {mounted && (
-                        <div className="mt-4 h-[300px] w-full">
-                          <ResponsiveContainer width="100%" height="100%" debounce={100}>
-                            <PieChart>
-                              <Pie
-                                data={pieData}
-                                dataKey="value"
-                                nameKey="name"
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={56}
-                                outerRadius={96}
-                                paddingAngle={2}
-                              >
-                                {pieData.map((_, index) => (
-                                  <Cell key={pieData[index].name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                                ))}
-                              </Pie>
-                              <Tooltip
-                                formatter={(value) => [moneyDetailed.format(Number(value)), "Amount"]}
-                                contentStyle={{
-                                  borderRadius: "0.75rem",
-                                  border: "1px solid rgb(226 232 240)",
-                                  backgroundColor: "rgba(255,255,255,0.96)",
-                                }}
-                              />
-                              <Legend verticalAlign="bottom" height={40} />
-                            </PieChart>
-                          </ResponsiveContainer>
-                        </div>
-                      )}
-                    </>
+                  {netProfit > 0 ? (
+                    <div className="mt-4 space-y-4">
+                      <div
+                        className="flex h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+                        role="img"
+                        aria-label={`Take-home about ${takeHomePct} percent, taxes about ${taxPct} percent of net profit`}
+                      >
+                        <div
+                          className="bg-emerald-500 transition-[width] duration-300 dark:bg-emerald-400"
+                          style={{ width: `${takeHomePct}%` }}
+                        />
+                        <div
+                          className="bg-amber-500 transition-[width] duration-300 dark:bg-amber-600"
+                          style={{ width: `${taxPct}%` }}
+                        />
+                      </div>
+                      <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-600 dark:text-slate-400">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                          Take-home ({takeHomePct}%)
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500 dark:bg-amber-600" />
+                          Taxes ({taxPct}%)
+                        </span>
+                      </div>
+                      <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200/80 bg-white/80 dark:divide-slate-700 dark:border-slate-600 dark:bg-slate-950/40">
+                        <li className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+                          <span className="text-slate-600 dark:text-slate-400">Net profit (after expenses)</span>
+                          <span className="tabular-nums font-semibold text-slate-900 dark:text-white">
+                            {moneyDetailed.format(netProfit)}
+                          </span>
+                        </li>
+                        <li className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+                          <span className="text-emerald-700 dark:text-emerald-400">Estimated take-home pay</span>
+                          <span className="tabular-nums font-semibold text-emerald-800 dark:text-emerald-300">
+                            {moneyDetailed.format(result.netTakeHome)}
+                          </span>
+                        </li>
+                        <li className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+                          <span className="text-slate-600 dark:text-slate-400">Total estimated taxes</span>
+                          <span className="tabular-nums font-semibold text-slate-900 dark:text-slate-100">
+                            {moneyDetailed.format(result.totalTax)}
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
                   ) : (
                     <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
-                      Add income and click Calculate to see the chart.
+                      Add income and click Calculate to see your breakdown.
                     </p>
                   )}
                 </div>
 
                 <div className="mt-8">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Tax breakdown</h3>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">By tax type</h3>
                   <ul className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
                     <li className="flex justify-between gap-4 py-2.5 text-sm">
                       <span className="text-slate-600 dark:text-slate-400">Self-employment (15.3%)</span>
