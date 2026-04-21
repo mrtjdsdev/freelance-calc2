@@ -90,10 +90,6 @@ export default function FreelanceTaxCalculator({
   const monthlyFed = result.federalIncomeTax / 12;
   const monthlyState = result.stateIncomeTax / 12;
 
-  const netProfit = result.netProfit;
-  const takeHomePct = netProfit > 0 ? Math.round((result.netTakeHome / netProfit) * 1000) / 10 : 0;
-  const taxPct = netProfit > 0 ? Math.round((result.totalTax / netProfit) * 1000) / 10 : 0;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/80 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/40 dark:text-slate-100">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
@@ -290,64 +286,35 @@ export default function FreelanceTaxCalculator({
                   </div>
                 </dl>
 
-                <div className="mt-8 rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Tax Summary</h3>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
-                    Estimated split of net profit after business expenses—take-home pay versus all estimated taxes
-                    (annual).
-                  </p>
-                  {netProfit > 0 ? (
-                    <div className="mt-4 space-y-4">
-                      <div
-                        className="flex h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
-                        role="img"
-                        aria-label={`Take-home about ${takeHomePct} percent, taxes about ${taxPct} percent of net profit`}
-                      >
-                        <div
-                          className="bg-emerald-500 transition-[width] duration-300 dark:bg-emerald-400"
-                          style={{ width: `${takeHomePct}%` }}
-                        />
-                        <div
-                          className="bg-amber-500 transition-[width] duration-300 dark:bg-amber-600"
-                          style={{ width: `${taxPct}%` }}
-                        />
-                      </div>
-                      <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-600 dark:text-slate-400">
-                        <span className="inline-flex items-center gap-2">
-                          <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                          Take-home ({takeHomePct}%)
-                        </span>
-                        <span className="inline-flex items-center gap-2">
-                          <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500 dark:bg-amber-600" />
-                          Taxes ({taxPct}%)
-                        </span>
-                      </div>
-                      <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200/80 bg-white/80 dark:divide-slate-700 dark:border-slate-600 dark:bg-slate-950/40">
-                        <li className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-                          <span className="text-slate-600 dark:text-slate-400">Net profit (after expenses)</span>
-                          <span className="tabular-nums font-semibold text-slate-900 dark:text-white">
-                            {moneyDetailed.format(netProfit)}
-                          </span>
-                        </li>
-                        <li className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-                          <span className="text-emerald-700 dark:text-emerald-400">Estimated take-home pay</span>
-                          <span className="tabular-nums font-semibold text-emerald-800 dark:text-emerald-300">
-                            {moneyDetailed.format(result.netTakeHome)}
-                          </span>
-                        </li>
-                        <li className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-                          <span className="text-slate-600 dark:text-slate-400">Total estimated taxes</span>
-                          <span className="tabular-nums font-semibold text-slate-900 dark:text-slate-100">
-                            {moneyDetailed.format(result.totalTax)}
-                          </span>
-                        </li>
-                      </ul>
+                <div className="mt-8 rounded-xl border border-slate-200/80 bg-slate-50/70 p-6 dark:border-slate-700 dark:bg-slate-900/50">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Tax summary</h3>
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Annual figures from your inputs (after you click Calculate).</p>
+                  <div className="mt-6 grid gap-8 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Gross income
+                      </p>
+                      <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+                        {money.format(grossIncome)}
+                      </p>
                     </div>
-                  ) : (
-                    <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
-                      Add income and click Calculate to see your breakdown.
-                    </p>
-                  )}
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Total taxes
+                      </p>
+                      <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+                        {money.format(result.totalTax)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                        Take-home pay
+                      </p>
+                      <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-emerald-700 dark:text-emerald-300 sm:text-4xl">
+                        {money.format(result.netTakeHome)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-8">
