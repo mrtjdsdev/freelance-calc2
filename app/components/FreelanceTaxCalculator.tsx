@@ -291,7 +291,7 @@ export default function FreelanceTaxCalculator({
                 </dl>
 
                 <div className="mt-8 rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Tax breakdown</h3>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Tax Summary</h3>
                   <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
                     Estimated split of net profit after business expenses—take-home pay versus all estimated taxes
                     (annual).
