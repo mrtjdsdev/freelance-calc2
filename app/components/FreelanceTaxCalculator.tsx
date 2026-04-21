@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   calculateFreelanceTax,
   STATE_OPTIONS,
   type FilingStatus,
+  type TaxBreakdown,
   type USStateCode,
 } from "@/lib/tax-calculator";
 
@@ -44,21 +45,45 @@ export default function FreelanceTaxCalculator({
   const [state, setState] = useState<USStateCode>(initialState);
   const [leadEmail, setLeadEmail] = useState("");
   const [leadSubmitted, setLeadSubmitted] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const calculateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (calculateTimeoutRef.current) clearTimeout(calculateTimeoutRef.current);
+    };
+  }, []);
+
+  const [displayResult, setDisplayResult] = useState<TaxBreakdown>(() =>
+    calculateFreelanceTax({
+      grossIncome: parseMoney("85000"),
+      businessExpenses: parseMoney("12000"),
+      filingStatus: "single",
+      state: initialState,
+    }),
+  );
 
   const grossIncome = parseMoney(grossRaw);
   const businessExpenses = parseMoney(expensesRaw);
 
-  const result = useMemo(
-    () =>
-      calculateFreelanceTax({
-        grossIncome,
-        businessExpenses,
-        filingStatus,
-        state,
-      }),
-    [grossIncome, businessExpenses, filingStatus, state],
-  );
+  const runCalculation = () => {
+    if (calculateTimeoutRef.current) clearTimeout(calculateTimeoutRef.current);
+    setIsCalculating(true);
+    calculateTimeoutRef.current = setTimeout(() => {
+      calculateTimeoutRef.current = null;
+      setDisplayResult(
+        calculateFreelanceTax({
+          grossIncome,
+          businessExpenses,
+          filingStatus,
+          state,
+        }),
+      );
+      setIsCalculating(false);
+    }, 1000);
+  };
 
+  const result = displayResult;
   const monthlyTakeHome = result.netTakeHome / 12;
   const monthlyTax = result.totalTax / 12;
   const monthlySE = result.selfEmploymentTax / 12;
@@ -188,11 +213,40 @@ export default function FreelanceTaxCalculator({
                 </div>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={runCalculation}
+              disabled={isCalculating}
+              className="mt-8 w-full rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/35 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-emerald-500 dark:hover:bg-emerald-400"
+            >
+              {isCalculating ? "Calculating…" : "Calculate"}
+            </button>
+            <p className="mt-2 text-center text-xs text-slate-500 dark:text-slate-500">
+              Update your inputs, then run the calculator to refresh results.
+            </p>
           </section>
 
           <section className="lg:col-span-7">
             <div className="overflow-hidden rounded-2xl border border-emerald-200/60 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 p-px shadow-xl shadow-emerald-900/20 dark:border-emerald-500/30 dark:shadow-black/50">
-              <div className="rounded-[calc(1rem-1px)] bg-white p-6 dark:bg-slate-950 sm:p-8">
+              <div className="relative rounded-[calc(1rem-1px)] bg-white p-6 dark:bg-slate-950 sm:p-8">
+                {isCalculating ? (
+                  <div
+                    className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-[calc(1rem-1px)] bg-white/90 px-6 backdrop-blur-[2px] dark:bg-slate-950/92"
+                    role="status"
+                    aria-live="polite"
+                    aria-busy="true"
+                  >
+                    <div
+                      className="h-11 w-11 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-600 dark:border-emerald-900 dark:border-t-emerald-400"
+                      aria-hidden={true}
+                    />
+                    <p className="text-center text-sm font-medium text-slate-800 dark:text-slate-100">
+                      Calculating your deductions...
+                    </p>
+                  </div>
+                ) : null}
+
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Results</h2>

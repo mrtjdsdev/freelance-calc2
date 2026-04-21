@@ -1,6 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import FreelanceTaxCalculator from "./components/FreelanceTaxCalculator";
 import { STATE_OPTIONS, stateSlugFromCode } from "@/lib/tax-calculator";
+
+/** Homepage: primary keyword first in the title segment (see root `title.template` in layout). */
+export const metadata: Metadata = {
+  title: "Freelance Tax Calculator",
+  description:
+    "Freelance tax calculator for 2026: estimate self-employment tax (15.3%), federal income tax using IRS-style brackets, and state tax for any US state. Free—see total tax owed, net take-home, and monthly budget.",
+};
 
 export default function Home() {
   return (

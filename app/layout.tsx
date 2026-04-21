@@ -18,13 +18,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "TaxSnap 2026 — Freelance Tax Calculator",
+    /** Fallback when a route does not set its own `title` (e.g. some error states). */
+    default: "Freelance Tax Calculator | TaxSnap 2026",
+    /** Child routes use a short segment, e.g. `Privacy Policy` → `Privacy Policy | TaxSnap 2026`. */
     template: "%s | TaxSnap 2026",
   },
   description:
-    "TaxSnap 2026 helps freelancers estimate self-employment tax (15.3%), federal income tax using 2026 brackets, and state tax for all 50 states. Plan take-home pay and monthly budget in one free calculator.",
+    "Freelance tax calculator for self-employed workers: estimate 15.3% self-employment tax, 2026 federal income tax, and state tax in all 50 US states. Free tool—plan take-home pay and monthly budget.",
   keywords: [
     "freelance tax calculator",
+    "self-employment tax calculator",
     "self-employment tax 2026",
     "Schedule C estimate",
     "tax calculator by state",
@@ -34,15 +37,15 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "TaxSnap 2026",
-    title: "TaxSnap 2026 — Freelance Tax Calculator",
+    title: "Freelance Tax Calculator | TaxSnap 2026",
     description:
-      "Estimate SE tax, federal tax, and state tax for freelancers. Free 2026 calculator for all US states.",
+      "Free freelance tax calculator: self-employment (SE) tax, 2026 federal brackets, and state tax for all US states. Plan take-home pay in minutes.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "TaxSnap 2026 — Freelance Tax Calculator",
+    title: "Freelance Tax Calculator | TaxSnap 2026",
     description:
-      "Estimate SE tax, federal tax, and state tax for freelancers. Free 2026 calculator for all US states.",
+      "Free freelance tax calculator: self-employment (SE) tax, 2026 federal brackets, and state tax for all US states. Plan take-home pay in minutes.",
   },
   robots: {
     index: true,
