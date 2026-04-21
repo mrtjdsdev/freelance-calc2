@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import {
   calculateFreelanceTax,
@@ -26,6 +26,16 @@ const moneyDetailed = new Intl.NumberFormat("en-US", {
 
 const PIE_COLORS = ["#059669", "#d97706", "#7c3aed"];
 
+/** Recharts touches `window`/DOM; render chart only after client mount so SSR/Vercel builds never execute it. */
+function NoSSR({ fallback, children }: { fallback: ReactNode; children: ReactNode }) {
+  const [client, setClient] = useState(false);
+  useEffect(() => {
+    setClient(true);
+  }, []);
+  if (!client) return fallback;
+  return children;
+}
+
 function parseMoney(raw: string): number {
   const n = Number.parseFloat(raw.replace(/,/g, ""));
   return Number.isFinite(n) ? Math.max(0, n) : 0;
@@ -49,13 +59,7 @@ export default function FreelanceTaxCalculator({
   const [leadEmail, setLeadEmail] = useState("");
   const [leadSubmitted, setLeadSubmitted] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
-  /** Recharts ResponsiveContainer measures the DOM; render only after mount so height is non-zero on production. */
-  const [mounted, setMounted] = useState(false);
   const calculateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -313,7 +317,14 @@ export default function FreelanceTaxCalculator({
                   </p>
                   {pieData.length > 0 ? (
                     <div className="mt-4 h-[350px] w-full">
-                      {mounted ? (
+                      <NoSSR
+                        fallback={
+                          <div
+                            className="h-[350px] w-full rounded-lg bg-slate-200 dark:bg-slate-700"
+                            aria-hidden
+                          />
+                        }
+                      >
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
@@ -341,14 +352,7 @@ export default function FreelanceTaxCalculator({
                             <Legend verticalAlign="bottom" height={40} />
                           </PieChart>
                         </ResponsiveContainer>
-                      ) : (
-                        <div
-                          className="flex h-[350px] w-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white/50 text-sm text-slate-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-slate-400"
-                          aria-hidden
-                        >
-                          Loading chart…
-                        </div>
-                      )}
+                      </NoSSR>
                     </div>
                   ) : (
                     <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
